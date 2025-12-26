@@ -1,11 +1,11 @@
-// ✅ DASHBOARD CON VISTA RESPONSIVE Y UX MEJORADA
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import axios from '../api/axios';
 import TaskCard from '../components/TaskCard';
 import TaskForm from '../components/TaskForm';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, ListTodo, User } from 'lucide-react';
+import { LogOut, ListTodo, User, Shield } from 'lucide-react';
 
 const estados = ['pendiente', 'en progreso', 'completada'];
 
@@ -67,9 +67,20 @@ const Dashboard = () => {
           <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
             <ListTodo size={24} /> Mis Tareas
           </h2>
-          <div className="flex items-center gap-2 text-gray-600">
+          <div className="flex items-center gap-3 text-gray-600">
             <User size={18} />
             <span>{user?.name}</span>
+            {user?.twoFactorEnabled && (
+              <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                <Shield size={12} /> MFA
+              </span>
+            )}
+            <Link
+              to="/mfa-setup"
+              className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded hover:bg-indigo-200 flex items-center gap-1 text-sm"
+            >
+              <Shield size={14} /> Seguridad
+            </Link>
             <button
               className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 flex items-center gap-1"
               onClick={logout}

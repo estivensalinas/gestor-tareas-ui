@@ -5,26 +5,35 @@ const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
-  console.log('calling AuthProvider');
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const login = async (email, password) => {
-    const res = await axios.post("/auth/login", { email, password });
+  const login = async (email, password, mfaToken = null) => {
+    const payload = { email, password };
+    if (mfaToken) {
+      payload.mfaToken = mfaToken;
+    }
+
+    const res = await axios.post("/auth/login", payload);
+
+    // Si requiere MFA, retornar indicador sin guardar token
+    if (res.data.requiresMfa) {
+      return { requiresMfa: true };
+    }
+
     localStorage.setItem("token", res.data.token);
     await getMe();
+    return res.data;
   };
 
   const logout = () => {
     localStorage.removeItem("token");
-    console.log("Logout");
     setUser(null);
   };
 
   const getMe = async () => {
     try {
       const res = await axios.get("/auth/me");
-      console.log(res.data, "getMe response");
       setUser(res.data);
     } catch (error) {
       logout();
@@ -33,10 +42,33 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Configurar MFA
+  const setupMfa = async () => {
+    const res = await axios.post("/auth/mfa/setup");
+    return res.data;
+  };
+
+  // Habilitar MFA
+  const enableMfa = async (token) => {
+    const res = await axios.post("/auth/mfa/enable", { token });
+    if (res.data.twoFactorEnabled) {
+      setUser(prev => ({ ...prev, twoFactorEnabled: true }));
+    }
+    return res.data;
+  };
+
+  // Deshabilitar MFA
+  const disableMfa = async (token) => {
+    const res = await axios.post("/auth/mfa/disable", { token });
+    if (!res.data.twoFactorEnabled) {
+      setUser(prev => ({ ...prev, twoFactorEnabled: false }));
+    }
+    return res.data;
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      //console.log("Token found", token);
       getMe();
     } else {
       setLoading(false);
@@ -44,7 +76,15 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      login,
+      logout,
+      setupMfa,
+      enableMfa,
+      disableMfa
+    }}>
       {children}
     </AuthContext.Provider>
   );
