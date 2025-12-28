@@ -21,7 +21,9 @@ const PasswordStrengthMeter = ({ password }) => {
         hasUppercase: /[A-Z]/.test(password),
         hasLowercase: /[a-z]/.test(password),
         hasNumber: /\d/.test(password),
-        hasSpecial: /[@$!%*?&]/.test(password)
+        hasSpecial: /[@$!%*?&]/.test(password),
+        // Validar que SOLO contenga caracteres permitidos (igual que el backend)
+        onlyAllowedChars: /^[A-Za-z\d@$!%*?&]+$/.test(password)
     };
 
     const allValid = Object.values(validations).every(v => v);
@@ -67,6 +69,9 @@ const PasswordStrengthMeter = ({ password }) => {
                 </li>
                 <li className={`flex items-center gap-2 ${validations.hasSpecial ? 'text-green-600' : 'text-gray-500'}`}>
                     {validations.hasSpecial ? '✓' : '○'} Un carácter especial (@$!%*?&)
+                </li>
+                <li className={`flex items-center gap-2 ${validations.onlyAllowedChars ? 'text-green-600' : 'text-red-500'}`}>
+                    {validations.onlyAllowedChars ? '✓' : '✗'} Solo caracteres permitidos (sin [, (, ', etc.)
                 </li>
             </ul>
 
